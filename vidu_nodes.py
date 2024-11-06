@@ -57,7 +57,11 @@ class Text2VideoNode(ViduBaseNode):
             "optional": {
                 "style": (["general", "anime"],),
                 "model": (["vidu-high-performance"],),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 2147483647
+                }),
                 "enhance": ("BOOLEAN", {"default": True}),
                 "moderation": ("BOOLEAN", {"default": False}),
                 "negative_prompt": ("STRING", {"multiline": True, "default": ""})
@@ -115,7 +119,11 @@ class Image2VideoNode(ViduBaseNode):
                 "model": (["vidu-high-performance"],),
                 "enhance": ("BOOLEAN", {"default": True}),
                 "moderation": ("BOOLEAN", {"default": False}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 2147483647
+                }),
             }
         }
 
@@ -206,7 +214,11 @@ class Character2VideoNode(ViduBaseNode):
                 "model": (["vidu-high-performance"],),
                 "enhance": ("BOOLEAN", {"default": True}),
                 "moderation": ("BOOLEAN", {"default": False}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 2147483647
+                }),
             }
         }
 
