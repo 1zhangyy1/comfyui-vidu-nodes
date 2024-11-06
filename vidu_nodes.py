@@ -158,21 +158,22 @@ class Image2VideoNode(ViduBaseNode):
         create_response = self._make_request("POST", "/tools/v1/files/uploads", 
                                            data={"scene": "vidu"})
         
-        # Upload image to the provided URL
+        # Get upload URL and resource ID
         put_url = create_response["put_url"]
         resource_id = create_response["id"]
         
-        # Convert image to bytes
-        import cv2
-        import numpy as np
+        # Convert tensor to PNG bytes
+        import io
+        from PIL import Image
+        import torch
+
+        # Convert tensor to PIL Image
+        image = Image.fromarray((image[0] * 255).cpu().numpy().astype('uint8'))
         
-        # ComfyUI images are in NHWC format, float32
-        # Convert to uint8 BGR format for OpenCV
-        image = (image[0] * 255).astype(np.uint8)
-        # Convert from RGB to BGR
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        
-        image_bytes = cv2.imencode('.png', image)[1].tobytes()
+        # Convert to bytes
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format='PNG')
+        image_bytes = img_byte_arr.getvalue()
         
         # Upload using PUT request
         headers = {"Content-Type": "image/png"}
