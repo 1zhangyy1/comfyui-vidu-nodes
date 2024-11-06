@@ -288,6 +288,10 @@ class UpscaleVideoNode(ViduBaseNode):
             "model": model,
             "input": {
                 "creation_id": creation_id
+            },
+            "output_params": {
+                "sample_count": 1,
+                "duration": 4  # 或者根据原视频时长设置为8
             }
         }
         
