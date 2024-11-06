@@ -165,6 +165,13 @@ class Image2VideoNode(ViduBaseNode):
         # Convert image to bytes
         import cv2
         import numpy as np
+        
+        # ComfyUI images are in NHWC format, float32
+        # Convert to uint8 BGR format for OpenCV
+        image = (image[0] * 255).astype(np.uint8)
+        # Convert from RGB to BGR
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        
         image_bytes = cv2.imencode('.png', image)[1].tobytes()
         
         # Upload using PUT request

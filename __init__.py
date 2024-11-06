@@ -1,3 +1,5 @@
+print("Loading VIDU nodes...")
+
 from .vidu_nodes import (
     Text2VideoNode,
     Image2VideoNode,
@@ -22,4 +24,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "VideoDownloader": "Video Downloader (VIDU)"
 }
 
+print("VIDU nodes loaded successfully!")
+
+# 确保这些变量被正确导出
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS'] 
