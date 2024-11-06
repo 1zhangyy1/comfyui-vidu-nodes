@@ -34,12 +34,16 @@ class ViduBaseNode:
                 raise TimeoutError("Task timed out")
                 
             status = self._make_request("GET", f"/ent/v1/tasks/{task_id}/creations")
+            
+            # 处理所有可能的状态
             if status["state"] == "success":
                 return status
             elif status["state"] == "failed":
                 raise Exception(f"Generation failed: {status['err_code']}")
-                
-            time.sleep(5)
+            elif status["state"] in ["created", "queueing", "scheduling", "processing"]:
+                time.sleep(5)
+            else:
+                raise Exception(f"Unknown state: {status['state']}")
 
 class Text2VideoNode(ViduBaseNode):
     @classmethod
@@ -154,33 +158,32 @@ class Image2VideoNode(ViduBaseNode):
         return (creation["url"], creation["cover_url"], task_id)
 
     def _upload_image(self, image) -> str:
-        # Create upload request
+        # 1. 创建上传请求
         create_response = self._make_request("POST", "/tools/v1/files/uploads", 
                                            data={"scene": "vidu"})
         
-        # Get upload URL and resource ID
+        # 2. 获取上传URL和资源ID
         put_url = create_response["put_url"]
         resource_id = create_response["id"]
         
-        # Convert tensor to PNG bytes
+        # 3. 准备图片数据
         import io
         from PIL import Image
-        import torch
-
-        # Convert tensor to PIL Image
-        image = Image.fromarray((image[0] * 255).cpu().numpy().astype('uint8'))
         
-        # Convert to bytes
+        # Convert tensor to PIL Image and then to bytes
+        image = Image.fromarray((image[0] * 255).cpu().numpy().astype('uint8'))
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
         image_bytes = img_byte_arr.getvalue()
         
-        # Upload using PUT request
+        # 4. 上传图片
         headers = {"Content-Type": "image/png"}
         response = requests.put(put_url, data=image_bytes, headers=headers)
+        
+        # 5. 获取etag (注意要去掉引号)
         etag = response.headers.get("etag").strip('"')
         
-        # Finish upload
+        # 6. 完成上传
         finish_response = self._make_request(
             "PUT",
             f"/tools/v1/files/uploads/{resource_id}/finish",
