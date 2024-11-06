@@ -1,0 +1,423 @@
+接⼝
+创建任务接⼝
+请求⽅式 Request Method
+⽹络协议 https
+请求⽅法 POST
+请求地址 /ent/v1/tasks
+请求数据格式 application/json
+响应数据格式 application/json
+请求头 Request Header
+字段 值 描述
+Content-Type application/json
+Authorization Token {token} 将{token}替换为提供给您的token
+请求体 Reuqest Body
+字段 ⼦字段 ⼦字段 类型 是否必
+填
+描述
+type string 是 任务类型
+可选值
+• text2video
+• img2video
+• character2video
+• upscale
+model string 否 模型类型
+text2video ， img2video ，
+character2video 任务可选值
+• vidu-high-performance
+upscale 任务可选值
+• stable
+style string 否 ⻛格
+只有 text2video 任务需要填写
+• general
+• anime
+moderati
+on
+bool 否 是否打开审核
+默认值为 false ， 不打开审核
+input struct 是 任务输⼊，⼀个结构体，包含如下字段
+seed int 否 随机种⼦，不传或者传0则使⽤随机数替代
+⼿动设置则使⽤设置的种⼦
+enhance bool 否 是否使⽤提⽰词增强功能
+默认值为true，启⽤提⽰词增强功能
+creatio
+n_id
+string 否 ⽣成物id。 如果提交 upscale 任务时则必填，
+提交其他任务不⽤填
+prompts array 否 提⽰词
+type string 是 提⽰词类型
+• text
+• image
+cont
+ent
+string 是 提⽰词内容
+当 type 为 text 时，content为⽂本内容
+content ⻓度不能⼤于 1500 个字符
+当 text 为 image 时，content为图像URL(需要
+确保URL公⽹可访问)
+图⽚格式仅⽀持 JPG , PNG 。且图⽚⼤⼩需要⼩
+于50M， 图⽚⻓宽⽐需要⼩于1:4或者4:1
+当提交 character2video 任务时，图⽚尺⼨不
+能⼩于 128*128，⽐例需要⼩于 1:16 或者 16:1
+output_p
+arams
+struct 否 任务输出设置
+当提交 text2video ， img2video ，
+character2video 任务时为必填
+当提交 upscale 任务时为⾮必填
+sample_
+count
+int 是 ⽣成视频数量
+⽬前仅⽀持 1
+duratio
+n
+int 是 视频时⻓
+⽬前⽀持 4 , 8
+响应体 Response
+字段 类型 描述
+id string 任务ID，系统⽣成
+type string 提交的任务类型
+state string 任务状态
+model string 提交任务的model
+style string 提交任务的⻛格
+moderation bool 提交任务是否开启审核
+input struct 提交任务的input
+output_params struct 提交任务的输出设置
+err_code string 错误码，具体⻅错误码表
+creations_count int 成功⽣成的⽣成物数量
+created_at string 任务创建时间
+响应⽰例
+{
+"id": "2469692898739603",
+"type": "text2video",
+"state": "created",
+"model": "vidu-high-performance",
+"style": "general",
+"moderation": false,
+"input": {
+"creation_id": "0",
+"prompts": [
+{
+"type": "text",
+"content": "generate five iphone",
+"negative": false
+}
+],
+"seed": 766810195,
+"enhance": true
+},
+"output_params": {
+"sample_count": 1,
+"duration": 4
+},
+"err_code": "",
+"creations_count": 0,
+"created_at": "2024-10-10T15:41:31.968916Z"
+}
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+查询任务接⼝
+请求⽅式 Request Method
+⽹络协议 https
+请求⽅法 POST
+请求地址 /ent/v1/tasks/{id}/creations
+请求数据格式 application/json
+响应数据格式 application/json
+请求头 Request Header
+字段 值 描述
+Content-Type application/json
+Authorization Token {token} 将{token}替换为提供给您的token
+请求体 Reuqest Body
+字段 类型 是否必选 描述
+id string 是 任务id，由创建任务接⼝创建成功返回
+响应体 Response
+字段 ⼦字段 类型 描述
+state string 任务状态
+• created 创建成功
+• queueing 排队中
+• scheduling 调度中
+• processing 处理中
+• success ⽣成成功
+• failed ⽣成失败
+err_code string 错误码，具体⻅错误码表
+creations array ⽣成物结果
+id string ⽣成物id，⽤来标识不同的⽣成物
+url string ⽣成物URL， ⼀个⼩时有效期
+cover_
+url
+string ⽣成物封⾯，⼀个⼩时有效期
+{
+"state": "success",
+"err_code": "",
+"creations": [
+{
+"id": "2469699811756349",
+"url": "https://dev-ss-vidu.s3.cn-northwest1.amazonaws.com.cn/infer/tasks/24/1010/15/2469692898739603/creation01/video.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-AmzCredential=AKIARRHG6JR7D2BRIAO5%2F20241011%2Fcn-northwest1%2Fs3%2Faws4_request&X-Amz-Date=20241011T053702Z&X-Amz-Expires=86400&X-AmzSignedHeaders=host&response-content-disposition=attachment%3Bfilename%3Dviduhigh-performance-general-4-2024-10-10T15%253A48%253A33Z.mp4&x-id=GetObject&XAmzSignature=1f56c5759329a655a856a768dd6bcccb7cbb4715a036ab7e60a92885375ac342",
+"cover_url": "https://dev-ss-vidu.s3.cn-northwest1.amazonaws.com.cn/infer/tasks/24/1010/15/2469692898739603/creation01/cover.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-AmzCredential=AKIARRHG6JR7D2BRIAO5%2F20241011%2Fcn-northwest1%2Fs3%2Faws4_request&X-Amz-Date=20241011T053702Z&X-Amz-Expires=3600&X-AmzSignedHeaders=host&x-id=GetObject&X-AmzSignature=21b9cb9294476cb2635aa3d556ebcdd3a37d99731a5740c1faa3185ccb36652d"
+}
+]
+}
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+Example
+# 创建⽂⽣视频任务
+curl -X POST -H "Authorization: Token {token}" -H "Content-Type:
+application/json" -d '
+{
+"type": "text2video",
+"model": "vidu-high-performance",
+"style": "general",
+"input":{
+"seed": 123,
+1
+2
+3
+4
+5
+6
+7
+8
+"enhance": true,
+"prompts":[{
+"type":"text",
+"content":"⼩⽩兔⽩⼜⽩"
+}]
+},
+"output_params":{
+"sample_count":1,
+"duration": 4
+},
+"moderation": false}' https://api.vidu.zone/ent/v1/tasks
+# 创建图⽣视频任务
+curl -X POST -H "Authorization: Token {token}" -H "Content-Type:
+application/json" -d '
+{
+"type": "img2video",
+"model": "vidu-high-performance",
+"input":{
+"enhance": true,
+"prompts":[{
+"type":"text",
+"content":"向⽇葵动起来"
+},{
+"type":"image",
+"content":"https://pic.netbian.com/uploads/allimg/170624/172231-
+1498296151ea67.jpg"
+}]
+},
+"output_params":{
+"sample_count":1,
+"duration": 4
+},
+"moderation": false}' https://api.vidu.zone/ent/v1/tasks
+# 创建参考⽣视频
+curl -X POST -H "Authorization: Token {token}" -H "Content-Type:
+application/json" -d '
+{
+"type": "character2video",
+"model": "vidu-high-performance",
+"input":{
+"enhance": true,
+"prompts":[{
+"type":"text",
+"content":"向⽇葵在可⼝可乐中游泳"
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+},{
+"type":"image",
+"content":"https://pic.netbian.com/uploads/allimg/170624/172231-
+1498296151ea67.jpg"
+}]
+},
+"output_params":{
+"sample_count":1,
+"duration": 4
+},
+"moderation": false}' https://api.vidu.zone/ent/v1/tasks
+# upscale 任务
+curl -X POST -H "Authorization: Token {token}" -H "Content-Type:
+application/json" -d '
+{
+"type": "upscale",
+"model": "stable",
+"input":{
+"creation_id": 2421167565532164 // 从GetTaskCreations接⼝获取
+},
+"output_params":{
+"sample_count":1,
+"duration": 4
+}
+}' https://api.vidu.zone/ent/v1/tasks
+# 获取任务状态
+curl -H "Authorization: Token {token}" -H "Content-Type: application/json"
+https://api.vidu.zone/ent/v1/tasks/{task_id}/creations
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+图⽚上传流程
+创建接⼝
+curl -v -H "Content-Type: application/json" -H "Authorization: Token {token}" -
+-data '{"scene": "vidu"}' https://api.vidu.zone/tools/v1/files/uploads
+// 会拿到⼀个带有效期的put_url, 记录下id和 put_url
+1
+2
+3
+// example
+{
+"id": "resource_id",
+"put_url": "put_url_example",
+"expires_at": "2024-09-05T04:20:29.589251952Z"
+}
+4
+5
+6
+7
+8
+9
+通过http PUT 上传
+curl -v -H "Content-Type: image/png" -XPUT --data-binary '@upload.png'
+{put_url_example}
+// 在返回的response header中有⼀个etag， 记录下来
+// example
+> Host: uploads.vidu.zone
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: image/png
+> Content-Length: 157915
+>
+* upload completely sent off: 157915 bytes
+< HTTP/2 200
+< content-length: 0
+< date: Thu, 05 Sep 2024 03:45:20 GMT
+< x-amz-expiration: expiry-date="Fri, 13 Sep 2024 00:00:00 GMT", ruleid="delete-for-7-days"
+< x-amz-server-side-encryption: AES256
+< etag: "d035e206b3243107372249559495346c"
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+完成上传
+// 发起 finish 请求, 拿到上传的图⽚uri, 该图⽚uri可以做为 input 传⼊创建任务
+curl -XPUT -H "Content-Type: application/json" -H "Authorization: Token
+{token}" --data '{"etag": "etag_response"}'
+https://api.vidu.zone/tools/v1/files/uploads/{resource_id}/finish
+// example
+{
+"uri":"ssupload:?id=2419989898896018"
