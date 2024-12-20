@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-vidu-nodes"
+description = "This is a ComfyUI node package that integrates with VIDU API, supporting features such as text-to-video, image-to-video, character-to-video generation, and video super-resolution."
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/1zhangyy1/comfyui-vidu-nodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "comfyui-vidu-nodes"
+Icon = ""
