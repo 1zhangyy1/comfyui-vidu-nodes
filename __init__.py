@@ -5,7 +5,8 @@ from .vidu_nodes import (
     Image2VideoNode,
     Character2VideoNode,
     UpscaleVideoNode,
-    VideoDownloaderNode
+    VideoDownloaderNode,
+    StartEnd2VideoNode
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -13,7 +14,8 @@ NODE_CLASS_MAPPINGS = {
     "Image2Video": Image2VideoNode,
     "Character2Video": Character2VideoNode,
     "UpscaleVideo": UpscaleVideoNode,
-    "VideoDownloader": VideoDownloaderNode
+    "VideoDownloader": VideoDownloaderNode,
+    "StartEnd2Video": StartEnd2VideoNode
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -21,7 +23,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Image2Video": "Image to Video (VIDU)",
     "Character2Video": "Character to Video (VIDU)",
     "UpscaleVideo": "Upscale Video (VIDU)",
-    "VideoDownloader": "Video Downloader (VIDU)"
+    "VideoDownloader": "Video Downloader (VIDU)",
+    "StartEnd2Video": "Start-End to Video (VIDU)"
 }
 
 print("VIDU nodes loaded successfully!")
