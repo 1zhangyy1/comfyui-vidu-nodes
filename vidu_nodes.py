@@ -59,16 +59,18 @@ class ViduBaseNode:
         self.log(f"开始轮询任务状态, ID: {task_id}")
         start_time = time.time()
         
+        # 使用正确的API路径
+        query_path = f"/ent/v2/tasks/{task_id}/creations"
+        
         while True:
             if time.time() - start_time > timeout:
                 self.log(f"任务超时: {task_id}")
                 raise TimeoutError(f"任务超时，超过了最大等待时间({timeout}秒)")
-                
+            
             self.log(f"查询任务状态: {task_id}")
             
             try:
-                # 使用v2版本的API
-                status = self._make_request("GET", f"/v2/vidu/tasks/{task_id}/status")
+                status = self._make_request("GET", query_path)
                 
                 self.log(f"当前任务状态: {status.get('state', '未知')}")
                 
@@ -80,7 +82,7 @@ class ViduBaseNode:
                     err_code = status.get('err_code', '未知错误')
                     self.log(f"任务失败: {err_code}")
                     raise Exception(f"生成失败: {err_code}")
-                elif status["state"] in ["created", "queueing", "scheduling", "processing"]:
+                elif status["state"] in ["created", "queueing", "processing"]:
                     self.log(f"任务处理中: {status['state']}, 等待5秒后再次查询...")
                     time.sleep(5)
                 else:
@@ -191,7 +193,7 @@ class Text2VideoNode(ViduBaseNode):
                 "prompt": ("STRING", {"multiline": True}),
                 "duration": (["4", "8"],),
                 "token": ("STRING", {"default": ""}),
-                "api_base": ("STRING", {"default": "https://api.vidu.com"}),
+                "api_base": ("STRING", {"default": "https://api.vidu.cn"}),
                 "model_version": (["1.5", "2.0"],),
                 "resolution": (["512", "720p", "1080p"],),
             },
@@ -230,28 +232,22 @@ class Text2VideoNode(ViduBaseNode):
                 prompts.append({"type": "text", "content": negative_prompt, "negative": True})
             
             task_data = {
-                "type": "text2video",
-                "model_version": model_version,
+                "model": f"vidu{model_version}",  # 将1.5转为vidu1.5格式
                 "style": style,
-                "input": {
-                    "seed": seed,
-                    "enhance": enhance,
-                    "prompts": prompts
-                },
-                "output_params": {
-                    "sample_count": 1,
-                    "duration": int(duration),
-                    "resolution": resolution,
-                    "aspect_ratio": aspect_ratio,
-                    "movement_amplitude": movement_amplitude
-                },
-                "moderation": moderation
+                "prompt": prompt,
+                "duration": int(duration),
+                "seed": seed,
+                "aspect_ratio": aspect_ratio,
+                "resolution": resolution,
+                "movement_amplitude": movement_amplitude
             }
             
             self.log("创建文本生成视频任务...")
-            # 使用v2版本的API
-            result = self._make_request("POST", "/v2/vidu/tasks", task_data)
-            task_id = result["id"]
+            # 修改API基础URL和路径
+            self.api_base = "https://api.vidu.cn"
+            result = self._make_request("POST", "/ent/v2/text2video", task_data)
+            task_id = result["task_id"]  # 注意：返回值中是task_id而非id
+            
             self.log(f"任务创建成功, ID: {task_id}")
             
             self.log(f"等待任务完成: {task_id}")
@@ -278,7 +274,7 @@ class Image2VideoNode(ViduBaseNode):
                 "prompt": ("STRING", {"multiline": True}),
                 "duration": (["4", "8"],),
                 "token": ("STRING", {"default": ""}),
-                "api_base": ("STRING", {"default": "https://api.vidu.com"}),
+                "api_base": ("STRING", {"default": "https://api.vidu.cn"}),
                 "model_version": (["1.5", "2.0"],),
                 "resolution": (["512", "720p", "1080p"],),
             },
@@ -309,41 +305,34 @@ class Image2VideoNode(ViduBaseNode):
             
             self.log(f"开始图像生成视频 - 提示词: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
             
-            # First upload the image
+            # 上传图像
             self.log("上传输入图像...")
             image_uri = self._upload_image(image)
             self.log(f"图像上传成功: {image_uri}")
             
+            # 构建请求参数，与API文档保持一致
             task_data = {
-                "type": "img2video",
-                "model_version": model_version,
-                "input": {
-                    "seed": seed,
-                    "enhance": enhance,
-                    "prompts": [
-                        {"type": "text", "content": prompt},
-                        {"type": "image", "content": image_uri}
-                    ]
-                },
-                "output_params": {
-                    "sample_count": 1,
-                    "duration": int(duration),
-                    "resolution": resolution,
-                    "aspect_ratio": aspect_ratio,
-                    "movement_amplitude": movement_amplitude
-                },
-                "moderation": moderation
+                "model": f"vidu{model_version}",  # 将1.5转为vidu1.5格式
+                "images": [image_uri],  # 注意这里是数组
+                "prompt": prompt,
+                "duration": int(duration),
+                "seed": seed,
+                "resolution": resolution,
+                "movement_amplitude": movement_amplitude
             }
             
             self.log("创建图像生成视频任务...")
-            # 使用v2版本的API
-            result = self._make_request("POST", "/v2/vidu/tasks", task_data)
-            task_id = result["id"]
+            # 使用正确的API端点
+            self.api_base = "https://api.vidu.cn"  # 确保使用正确的域名
+            result = self._make_request("POST", "/ent/v2/img2video", task_data)
+            task_id = result["task_id"]  # 使用task_id而不是id
+            
             self.log(f"任务创建成功, ID: {task_id}")
             
             self.log(f"等待任务完成: {task_id}")
             status = self._wait_for_completion(task_id)
             
+            # 处理结果
             if "creations" in status and len(status["creations"]) > 0:
                 creation = status["creations"][0]
                 self.log(f"任务完成, 获取到视频URL: {creation['url']}")
@@ -365,7 +354,7 @@ class Character2VideoNode(ViduBaseNode):
                 "prompt": ("STRING", {"multiline": True}),
                 "duration": (["4", "8"],),
                 "token": ("STRING", {"default": ""}),
-                "api_base": ("STRING", {"default": "https://api.vidu.com"}),
+                "api_base": ("STRING", {"default": "https://api.vidu.cn"}),
                 "model_version": (["1.5", "2.0"],),
                 "resolution": (["512", "720p", "1080p"],),
             },
@@ -396,41 +385,35 @@ class Character2VideoNode(ViduBaseNode):
             
             self.log(f"开始角色生成视频 - 提示词: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
             
-            # Upload character image
+            # 上传角色图像
             self.log("上传角色图像...")
             image_uri = self._upload_image(character_image)
             self.log(f"角色图像上传成功: {image_uri}")
             
+            # 构建请求参数，与API文档保持一致
             task_data = {
-                "type": "character2video",
-                "model_version": model_version,
-                "input": {
-                    "seed": seed,
-                    "enhance": enhance,
-                    "prompts": [
-                        {"type": "text", "content": prompt},
-                        {"type": "image", "content": image_uri}
-                    ]
-                },
-                "output_params": {
-                    "sample_count": 1,
-                    "duration": int(duration),
-                    "resolution": resolution,
-                    "aspect_ratio": aspect_ratio,
-                    "movement_amplitude": movement_amplitude
-                },
-                "moderation": moderation
+                "model": f"vidu{model_version}",
+                "images": [image_uri],  # 参考图生成视频API接受1-3张图片
+                "prompt": prompt,
+                "duration": int(duration),
+                "seed": seed,
+                "aspect_ratio": aspect_ratio,
+                "resolution": resolution,
+                "movement_amplitude": movement_amplitude
             }
             
             self.log("创建角色生成视频任务...")
-            # 使用v2版本的API
-            result = self._make_request("POST", "/v2/vidu/tasks", task_data)
-            task_id = result["id"]
+            # 使用正确的API端点
+            self.api_base = "https://api.vidu.cn"
+            result = self._make_request("POST", "/ent/v2/reference2video", task_data)
+            task_id = result["task_id"]
+            
             self.log(f"任务创建成功, ID: {task_id}")
             
             self.log(f"等待任务完成: {task_id}")
             status = self._wait_for_completion(task_id)
             
+            # 处理结果
             if "creations" in status and len(status["creations"]) > 0:
                 creation = status["creations"][0]
                 self.log(f"任务完成, 获取到视频URL: {creation['url']}")
@@ -464,25 +447,18 @@ class UpscaleVideoNode(ViduBaseNode):
     def upscale(self, creation_id, token, model="stable"):
         try:
             self.token = token
+            self.api_base = "https://api.vidu.cn"
             
             self.log(f"开始视频超分 - 生成物ID: {creation_id}")
             
             task_data = {
-                "type": "upscale",
                 "model": model,
-                "input": {
-                    "creation_id": creation_id
-                },
-                "output_params": {
-                    "sample_count": 1,
-                    "duration": 4  # 或者根据原视频时长设置为8
-                }
+                "creation_id": creation_id
             }
             
             self.log("创建视频超分任务...")
-            # 使用v2版本的API
-            result = self._make_request("POST", "/v2/vidu/tasks", task_data)
-            task_id = result["id"]
+            result = self._make_request("POST", "/ent/v2/upscale", task_data)
+            task_id = result["task_id"]
             self.log(f"任务创建成功, ID: {task_id}")
             
             self.log(f"等待任务完成: {task_id}")
@@ -559,7 +535,7 @@ class StartEnd2VideoNode(ViduBaseNode):
                 "end_frame": ("IMAGE",),
                 "prompt": ("STRING", {"multiline": True}),
                 "token": ("STRING", {"default": ""}),
-                "api_base": ("STRING", {"default": "https://api.vidu.com"}),
+                "api_base": ("STRING", {"default": "https://api.vidu.cn"}),
                 "model": (["vidu2.0", "vidu1.5"],),
                 "resolution": (["360p", "720p", "1080p"],),
             },
